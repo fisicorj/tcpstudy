@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treinador de Montagem de Cabo de Rede</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .wire {
+            width: 30px;
+            height: 120px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: grab;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 5px;
+            color: transparent; /* Cor do texto transparente */
+            font-size: 0.7rem;
+            font-weight: 600;
+            background-size: 10px 10px;
+        }
+        /* Adiciona a cor de fundo sólida para os cabos de cor única */
+        .wire.solid-color {
+            background-image: none;
+        }
+        /* Adiciona as riscas brancas aos cabos "branco-cor" */
+        .wire.striped-color {
+            background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.5) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0.5) 75%, transparent 75%, transparent);
+        }
+        .wire:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+        }
+        .wire.dragging {
+            cursor: grabbing;
+            opacity: 0.7;
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+        }
+        .wire-placeholder {
+            width: 30px;
+            height: 120px;
+            border: 2px dashed #9ca3af;
+            border-radius: 8px;
+            background-color: #e5e7eb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 5px;
+            box-sizing: border-box;
+            position: relative;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+        .wire-placeholder.correct {
+            border-color: #10b981;
+            background-color: #d1fae5;
+        }
+        .wire-placeholder.incorrect {
+            border-color: #ef4444;
+            background-color: #fee2e2;
+        }
+        .wire-placeholder .slot-number {
+            position: absolute;
+            top: 5px;
+            color: #4b5563;
+            font-size: 0.8rem;
+        }
+        .drop-highlight {
+            border: 2px solid #3b82f6;
+            background-color: #bfdbfe;
+        }
+        .btn-check {
+            background: linear-gradient(to right, #34d399, #10b981);
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-weight: 700;
+        }
+        .btn-check:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(to right, #10b981, #059669);
+        }
+        .btn-reset {
+            background: linear-gradient(to right, #f87171, #ef4444);
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-weight: 700;
+        }
+        .btn-reset:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(to right, #ef4444, #dc2626);
+        }
+        .message-box {
+            animation: slideIn 0.5s ease-out;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        /* Estilos para o modal de referência */
+        #reference-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none; /* Inicia oculto */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #4b5563;
+        }
+        .ref-diagram-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .ref-diagram-container h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .ref-wires-container {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .ref-wire {
+            width: 30px;
+            height: 100px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .ref-wire.solid-color {
+            background-image: none;
+        }
+        .ref-wire.striped-color {
+            background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.5) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0.5) 75%, transparent 75%, transparent);
+            background-size: 10px 10px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white p-8 rounded-2xl shadow-xl max-w-4xl w-full text-center">
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">Treinador de Montagem de Cabo de Rede</h1>
+        <p class="text-lg text-gray-600 mb-6">Arraste e solte os fios para montar o cabo de acordo com o padrão selecionado.</p>
+
+        <!-- Seletor de padrão -->
+        <div class="mb-4">
+            <label for="pattern-select" class="block text-gray-700 font-semibold mb-2">Selecione o Padrão:</label>
+            <select id="pattern-select" class="w-full sm:w-64 p-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-blue-500 transition-all">
+                <option value="568A">Padrão 568A</option>
+                <option value="568B" selected>Padrão 568B</option>
+                <option value="Crossover">Crossover</option>
+            </select>
+        </div>
+
+        <!-- Referência visual dos padrões -->
+        <div class="mb-8">
+            <a href="#" id="show-ref-btn" class="text-blue-600 hover:text-blue-800 transition-colors font-semibold">
+                Ver diagrama de referência
+            </a>
+        </div>
+
+        <!-- Mensagens de status e contador de tentativas -->
+        <div id="message-container" class="mb-6 h-12 flex justify-center items-center"></div>
+        <div id="attempt-counter" class="text-sm text-gray-500 mb-4">Tentativas: 0</div>
+
+        <!-- Contêiner dos fios disponíveis (drag) -->
+        <div id="wires-container" class="flex flex-wrap justify-center gap-4 mb-8">
+            <!-- Fios serão injetados aqui via JS -->
+        </div>
+
+        <!-- Contêineres do conector (drop) -->
+        <div id="connector-group" class="flex flex-col items-center">
+            <div id="connector-container-1" class="flex flex-wrap justify-center gap-2 bg-gray-200 p-4 rounded-xl shadow-inner">
+                <!-- Slots dos fios serão injetados aqui via JS -->
+            </div>
+            <div id="connector-label-1" class="text-xs text-gray-500 mt-2 mb-4">Conector RJ45 (vista superior, da esquerda para a direita)</div>
+            
+            <div id="connector-container-2" class="flex flex-wrap justify-center gap-2 bg-gray-200 p-4 rounded-xl shadow-inner hidden">
+                <!-- Slots da segunda ponta do cabo crossover -->
+            </div>
+            <div id="connector-label-2" class="text-xs text-gray-500 mt-2 hidden"></div>
+        </div>
+
+        <!-- Botões de ação -->
+        <div class="flex flex-col sm:flex-row justify-center gap-4 mt-8">
+            <button id="check-btn" class="btn-check px-6 py-3 rounded-lg flex items-center justify-center transition-all">
+                <i class="fas fa-check-circle mr-2"></i> Verificar
+            </button>
+            <button id="reset-btn" class="btn-reset px-6 py-3 rounded-lg flex items-center justify-center transition-all">
+                <i class="fas fa-redo-alt mr-2"></i> Reiniciar
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Referência -->
+    <div id="reference-modal" class="hidden">
+        <div class="modal-content">
+            <i id="close-modal-btn" class="fas fa-times modal-close-btn"></i>
+            <h2 class="text-2xl font-bold mb-4">Diagramas de Padrão de Cabo</h2>
+            <p class="text-gray-600 mb-6">Confira a sequência correta de cores para cada padrão de montagem.</p>
+
+            <!-- Diagrama 568A -->
+            <div class="ref-diagram-container">
+                <h3>Padrão 568A</h3>
+                <div id="ref-568A" class="ref-wires-container"></div>
+            </div>
+
+            <!-- Diagrama 568B -->
+            <div class="ref-diagram-container">
+                <h3>Padrão 568B</h3>
+                <div id="ref-568B" class="ref-wires-container"></div>
+            </div>
+
+            <!-- Diagrama Crossover -->
+            <div class="ref-diagram-container">
+                <h3>Padrão Crossover (Ponta A & Ponta B)</h3>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <div class="flex flex-col items-center">
+                        <div id="ref-crossover-a" class="ref-wires-container"></div>
+                        <span class="text-sm text-gray-500 mt-2">Ponta 568A</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div id="ref-crossover-b" class="ref-wires-container"></div>
+                        <span class="text-sm text-gray-500 mt-2">Ponta 568B</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Array com os detalhes de cada fio, incluindo a cor e a ordem correta para cada padrão.
+        const wires = [
+            { id: 'bw-green', color: '#68D391', name: '', code: 'w-green' },
+            { id: 'green', color: '#38A169', name: '', code: 'green' },
+            { id: 'bw-orange', color: '#F6AD55', name: '', code: 'w-orange' },
+            { id: 'orange', color: '#DD6B20', name: '', code: 'orange' },
+            { id: 'bw-blue', color: '#63B3ED', name: '', code: 'w-blue' },
+            { id: 'blue', color: '#4299E1', name: '', code: 'blue' },
+            { id: 'bw-brown', color: '#B7791F', name: '', code: 'w-brown' },
+            { id: 'brown', color: '#9B5A03', name: '', code: 'brown' },
+        ];
+
+        // Definições dos padrões TIA/EIA 568A e 568B
+        const patterns = {
+            '568A': ['w-green', 'green', 'w-orange', 'blue', 'w-blue', 'orange', 'w-brown', 'brown'],
+            '568B': ['w-orange', 'orange', 'w-green', 'blue', 'w-blue', 'green', 'w-brown', 'brown'],
+            'Crossover': {
+                'endA': ['w-green', 'green', 'w-orange', 'blue', 'w-blue', 'orange', 'w-brown', 'brown'], // 568A
+                'endB': ['w-orange', 'orange', 'w-green', 'blue', 'w-blue', 'green', 'w-brown', 'brown'] // 568B
+            }
+        };
+        
+        // Mapeamento de código para cor
+        const wireMap = {};
+        wires.forEach(wire => {
+            wireMap[wire.code] = wire;
+        });
+
+        // Estado inicial da aplicação
+        let currentPattern = '568B';
+        let correctSequence = [];
+        let attempts = 0;
+
+        // Referências aos elementos DOM
+        const wiresContainer = document.getElementById('wires-container');
+        const connectorContainer1 = document.getElementById('connector-container-1');
+        const connectorContainer2 = document.getElementById('connector-container-2');
+        const connectorLabel1 = document.getElementById('connector-label-1');
+        const connectorLabel2 = document.getElementById('connector-label-2');
+        const patternSelect = document.getElementById('pattern-select');
+        const checkBtn = document.getElementById('check-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const messageContainer = document.getElementById('message-container');
+        const attemptCounter = document.getElementById('attempt-counter');
+        const showRefBtn = document.getElementById('show-ref-btn');
+        const referenceModal = document.getElementById('reference-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const ref568AContainer = document.getElementById('ref-568A');
+        const ref568BContainer = document.getElementById('ref-568B');
+        const refCrossoverAContainer = document.getElementById('ref-crossover-a');
+        const refCrossoverBContainer = document.getElementById('ref-crossover-b');
+
+
+        // Função para criar um elemento de fio arrastável
+        function createWireElement(wire) {
+            const wireDiv = document.createElement('div');
+            wireDiv.classList.add('wire', 'rounded-lg', 'flex-shrink-0');
+            wireDiv.style.backgroundColor = wire.color;
+            wireDiv.textContent = wire.name;
+            wireDiv.dataset.code = wire.code;
+            wireDiv.setAttribute('draggable', true);
+            wireDiv.id = `wire-${wire.id}`;
+            // Adiciona a classe 'striped-color' para os cabos "Branco-Cor"
+            if (wire.id.startsWith('bw-')) {
+                wireDiv.classList.add('striped-color');
+            } else {
+                wireDiv.classList.add('solid-color');
+            }
+            return wireDiv;
+        }
+        
+        // Função para criar um elemento de fio de referência estático
+        function createRefWireElement(wireCode) {
+            const wire = wireMap[wireCode];
+            const wireDiv = document.createElement('div');
+            wireDiv.classList.add('ref-wire', 'rounded-lg', 'flex-shrink-0');
+            wireDiv.style.backgroundColor = wire.color;
+            if (wire.id.startsWith('bw-')) {
+                wireDiv.classList.add('striped-color');
+            } else {
+                wireDiv.classList.add('solid-color');
+            }
+            return wireDiv;
+        }
+
+        // Função para criar um espaço reservado (slot) para o fio
+        function createPlaceholderElement(index) {
+            const placeholderDiv = document.createElement('div');
+            placeholderDiv.classList.add('wire-placeholder', 'rounded-lg');
+            placeholderDiv.dataset.index = index;
+            const slotNumber = document.createElement('span');
+            slotNumber.classList.add('slot-number');
+            slotNumber.textContent = index + 1;
+            placeholderDiv.appendChild(slotNumber);
+            return placeholderDiv;
+        }
+
+        // Função para renderizar os fios e slots na tela
+        function renderUI() {
+            // Limpa os contêineres antes de renderizar
+            wiresContainer.innerHTML = '';
+            connectorContainer1.innerHTML = '';
+            connectorContainer2.innerHTML = '';
+            messageContainer.innerHTML = '';
+            attempts = 0;
+            attemptCounter.textContent = `Tentativas: ${attempts}`;
+
+            // Sorteia os fios para que a ordem inicial seja aleatória
+            const shuffledWires = [...wires].sort(() => Math.random() - 0.5);
+            shuffledWires.forEach(wire => {
+                const wireElement = createWireElement(wire);
+                wiresContainer.appendChild(wireElement);
+            });
+
+            // Cria 8 slots para o primeiro conector
+            for (let i = 0; i < 8; i++) {
+                const placeholder = createPlaceholderElement(i);
+                connectorContainer1.appendChild(placeholder);
+            }
+            
+            // Lida com a exibição do segundo conector para o modo Crossover
+            if (currentPattern === 'Crossover') {
+                connectorContainer2.classList.remove('hidden');
+                connectorLabel2.classList.remove('hidden');
+                connectorLabel1.textContent = 'Ponta A (568A)';
+                connectorLabel2.textContent = 'Ponta B (568B)';
+                for (let i = 0; i < 8; i++) {
+                    const placeholder = createPlaceholderElement(i);
+                    connectorContainer2.appendChild(placeholder);
+                }
+            } else {
+                connectorContainer2.classList.add('hidden');
+                connectorLabel2.classList.add('hidden');
+                connectorLabel1.textContent = 'Conector RJ45 (vista superior, da esquerda para a direita)';
+            }
+
+            // Atualiza a sequência correta com base no padrão selecionado
+            correctSequence = patterns[currentPattern];
+            
+            // Renderiza os diagramas de referência no modal
+            renderReferenceDiagrams();
+        }
+
+        // Função para renderizar os diagramas de referência
+        function renderReferenceDiagrams() {
+            ref568AContainer.innerHTML = '';
+            ref568BContainer.innerHTML = '';
+            refCrossoverAContainer.innerHTML = '';
+            refCrossoverBContainer.innerHTML = '';
+
+            patterns['568A'].forEach(wireCode => {
+                ref568AContainer.appendChild(createRefWireElement(wireCode));
+                refCrossoverAContainer.appendChild(createRefWireElement(wireCode));
+            });
+            patterns['568B'].forEach(wireCode => {
+                ref568BContainer.appendChild(createRefWireElement(wireCode));
+                refCrossoverBContainer.appendChild(createRefWireElement(wireCode));
+            });
+        }
+
+        // Função para mostrar mensagens de feedback
+        function showMessage(text, type) {
+            let bgColor = '';
+            let textColor = 'text-white';
+            let icon = '';
+            if (type === 'success') {
+                bgColor = 'bg-green-500';
+                icon = '<i class="fas fa-check-circle mr-2"></i>';
+            } else if (type === 'error') {
+                bgColor = 'bg-red-500';
+                icon = '<i class="fas fa-times-circle mr-2"></i>';
+            }
+            
+            messageContainer.innerHTML = ''; // Limpa a mensagem anterior
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message-box', 'px-6', 'py-3', 'rounded-full', bgColor, textColor, 'font-semibold', 'flex', 'items-center');
+            messageDiv.innerHTML = `${icon} ${text}`;
+            messageContainer.appendChild(messageDiv);
+        }
+
+        // Inicia a renderização da interface
+        renderUI();
+
+        // Eventos de arrastar e soltar (Drag and Drop)
+        let draggedWire = null;
+
+        // Início do arrastar
+        document.addEventListener('dragstart', (e) => {
+            if (e.target.classList.contains('wire')) {
+                draggedWire = e.target;
+                e.dataTransfer.setData('text/plain', e.target.dataset.code);
+                setTimeout(() => {
+                    e.target.classList.add('dragging');
+                }, 0);
+            }
+        });
+
+        // Fim do arrastar
+        document.addEventListener('dragend', (e) => {
+            if (e.target.classList.contains('wire')) {
+                e.target.classList.remove('dragging');
+                draggedWire = null;
+            }
+        });
+
+        // Movimento sobre o destino (dragover)
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const validDropTarget = e.target.closest('#wires-container') || e.target.closest('.wire-placeholder');
+            if (validDropTarget) {
+                e.dataTransfer.dropEffect = 'move';
+            } else {
+                e.dataTransfer.dropEffect = 'none';
+            }
+        });
+        
+        // Soltar o fio no destino (drop)
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const target = e.target.closest('.wire-placeholder') || e.target.closest('#wires-container');
+            
+            if (draggedWire && target) {
+                // Se o alvo for um slot e ele já tem um fio
+                if (target.classList.contains('wire-placeholder') && target.querySelector('.wire')) {
+                    const existingWire = target.querySelector('.wire');
+                    const originalParent = draggedWire.parentNode;
+                    
+                    // Troca os fios de lugar
+                    originalParent.appendChild(existingWire);
+                    target.appendChild(draggedWire);
+                    
+                } 
+                // Se o alvo for um slot vazio ou o contêiner de fios disponíveis
+                else {
+                    target.appendChild(draggedWire);
+                }
+            }
+        });
+
+        // Eventos de entrada e saída do destino para o destaque visual
+        document.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            const target = e.target.closest('.wire-placeholder');
+            if (target && !target.querySelector('.wire')) {
+                target.classList.add('drop-highlight');
+            }
+        });
+
+        document.addEventListener('dragleave', (e) => {
+            const target = e.target.closest('.wire-placeholder');
+            if (target) {
+                target.classList.remove('drop-highlight');
+            }
+        });
+
+        // Evento para abrir o modal
+        showRefBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            referenceModal.style.display = 'flex';
+        });
+
+        // Evento para fechar o modal
+        closeModalBtn.addEventListener('click', () => {
+            referenceModal.style.display = 'none';
+        });
+
+
+        // Evento de seleção do padrão
+        patternSelect.addEventListener('change', (e) => {
+            currentPattern = e.target.value;
+            // Reinicia a interface para o novo padrão e atualiza a sequência correta
+            resetUI();
+        });
+
+        // Evento do botão Verificar
+        checkBtn.addEventListener('click', () => {
+            // Incrementa o contador de tentativas
+            attempts++;
+            attemptCounter.textContent = `Tentativas: ${attempts}`;
+            
+            // Remove classes de feedback visual
+            const allPlaceholders = document.querySelectorAll('.wire-placeholder');
+            allPlaceholders.forEach(p => p.classList.remove('correct', 'incorrect'));
+
+            const sequence1 = Array.from(connectorContainer1.children).map(slot => {
+                const wire = slot.querySelector('.wire');
+                return wire ? wire.dataset.code : null;
+            });
+            const sequence2 = (currentPattern === 'Crossover') ? Array.from(connectorContainer2.children).map(slot => {
+                const wire = slot.querySelector('.wire');
+                return wire ? wire.dataset.code : null;
+            }) : [];
+
+            // Verifica se todos os slots estão preenchidos
+            if (sequence1.includes(null) || (currentPattern === 'Crossover' && sequence2.includes(null))) {
+                showMessage('Por favor, preencha todos os 8 slots em ambos os conectores.', 'error');
+                return;
+            }
+
+            let isCorrect = true;
+            // Verifica o conector 1
+            const correctSeq1 = (currentPattern === 'Crossover') ? patterns['Crossover']['endA'] : patterns[currentPattern];
+            for (let i = 0; i < 8; i++) {
+                if (sequence1[i] === correctSeq1[i]) {
+                    connectorContainer1.children[i].classList.add('correct');
+                } else {
+                    connectorContainer1.children[i].classList.add('incorrect');
+                    isCorrect = false;
+                }
+            }
+
+            // Verifica o conector 2 para o modo Crossover
+            if (currentPattern === 'Crossover') {
+                const correctSeq2 = patterns['Crossover']['endB'];
+                for (let i = 0; i < 8; i++) {
+                    if (sequence2[i] === correctSeq2[i]) {
+                        connectorContainer2.children[i].classList.add('correct');
+                    } else {
+                        connectorContainer2.children[i].classList.add('incorrect');
+                        isCorrect = false;
+                    }
+                }
+            }
+
+            if (isCorrect) {
+                showMessage('Parabéns! A sequência está correta!', 'success');
+            } else {
+                showMessage('Sequência incorreta. Veja os slots vermelhos e tente novamente.', 'error');
+            }
+        });
+
+        // Evento do botão Reiniciar
+        resetBtn.addEventListener('click', () => {
+            resetUI();
+        });
+
+        // Função para reiniciar a interface do usuário
+        function resetUI() {
+            // Limpa o contêiner de mensagens e o feedback visual
+            messageContainer.innerHTML = '';
+            const allPlaceholders = document.querySelectorAll('.wire-placeholder');
+            allPlaceholders.forEach(p => p.classList.remove('correct', 'incorrect'));
+            
+            // Move todos os fios para o contêiner de fios disponíveis
+            const wiresInConnectors = document.querySelectorAll('.wire');
+            wiresInConnectors.forEach(wire => {
+                wiresContainer.appendChild(wire);
+            });
+
+            // Sorteia os fios novamente para uma nova ordem
+            const shuffledWires = [...wiresContainer.children].sort(() => Math.random() - 0.5);
+            wiresContainer.innerHTML = '';
+            shuffledWires.forEach(wire => wiresContainer.appendChild(wire));
+
+            // Lida com a exibição do segundo conector para o modo Crossover
+            if (patternSelect.value === 'Crossover') {
+                connectorContainer2.classList.remove('hidden');
+                connectorLabel2.classList.remove('hidden');
+                connectorLabel1.textContent = 'Ponta A (568A)';
+                connectorLabel2.textContent = 'Ponta B (568B)';
+                connectorContainer2.innerHTML = '';
+                for (let i = 0; i < 8; i++) {
+                    const placeholder = createPlaceholderElement(i);
+                    connectorContainer2.appendChild(placeholder);
+                }
+            } else {
+                connectorContainer2.classList.add('hidden');
+                connectorLabel2.classList.add('hidden');
+                connectorLabel1.textContent = 'Conector RJ45 (vista superior, da esquerda para a direita)';
+            }
+            connectorContainer1.innerHTML = '';
+            for (let i = 0; i < 8; i++) {
+                const placeholder = createPlaceholderElement(i);
+                connectorContainer1.appendChild(placeholder);
+            }
+            
+            // Reinicia o contador de tentativas
+            attempts = 0;
+            attemptCounter.textContent = `Tentativas: ${attempts}`;
+        }
+
+    </script>
+</body>
+</html>
