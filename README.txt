@@ -37,8 +37,8 @@ Font Awesome: For icons used in the UI.
 Local Setup
 To run this project locally, clone the repository and open the index.html file in your web browser.
 
-git clone https://github.com/your-username/cable-trainer-pro.git
-cd cable-trainer-pro
+git clone https://github.com/fisicorj/tcpstudy.git
+cd tcpstudy
 # Open index.html in your browser
 
 Contributing
