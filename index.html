@@ -842,6 +842,12 @@
                     if(this.elements.connectorLabel1) this.elements.connectorLabel1.textContent = 'Conector RJ45 (vista superior, da esquerda para a direita)';
                 }
                 
+                // Remove o botão de verificar da interface
+                const checkBtn = document.getElementById('check-btn');
+                if (checkBtn) {
+                    checkBtn.classList.add('hidden');
+                }
+
                 this.validateCurrentState();
 
                 // Lógica do tutorial
@@ -997,7 +1003,7 @@
                 if (allFilled) {
                     if (allCorrect) {
                         this.showMessage('Parabéns! A sequência está correta!', 'success');
-                    } else if (isFinalCheck) {
+                    } else {
                         this.showMessage('Sequência incorreta. Continue tentando.', 'error');
                     }
                 } else {
