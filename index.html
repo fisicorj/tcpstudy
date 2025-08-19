@@ -565,9 +565,9 @@
                     { id: 'bw-orange', color: '#F6AD55', name: 'Branco-Laranja', code: 'w-orange' },
                     { id: 'orange', color: '#DD6B20', name: 'Laranja', code: 'orange' },
                     { id: 'bw-blue', color: '#63B3ED', name: 'Branco-Azul', code: 'w-blue' },
-                    { id: 'blue', color: '#4299E1', name: '', code: 'blue' },
+                    { id: 'blue', color: '#4299E1', name: 'Azul', code: 'blue' },
                     { id: 'bw-brown', color: '#B7791F', name: 'Branco-Marrom', code: 'w-brown' },
-                    { id: 'brown', color: '#9B5A03', name: '', code: 'brown' },
+                    { id: 'brown', color: '#9B5A03', name: 'Marrom', code: 'brown' },
                 ];
                 this.patterns = {
                     '568A': ['w-green', 'green', 'w-orange', 'blue', 'w-blue', 'orange', 'w-brown', 'brown'],
@@ -783,6 +783,7 @@
                 wireDiv.setAttribute('tabindex', '0');
                 wireDiv.setAttribute('role', 'button');
                 wireDiv.id = `wire-${wire.id}-${Math.random().toString(36).substring(2, 8)}`;
+                wireDiv.title = wire.name; // Adiciona o tooltip com o nome do fio
                 if (wire.id.startsWith('bw-')) {
                     wireDiv.classList.add('striped-color');
                 } else {
@@ -842,12 +843,6 @@
                     if(this.elements.connectorLabel1) this.elements.connectorLabel1.textContent = 'Conector RJ45 (vista superior, da esquerda para a direita)';
                 }
                 
-                // Remove o botão de verificar da interface
-                const checkBtn = document.getElementById('check-btn');
-                if (checkBtn) {
-                    checkBtn.classList.add('hidden');
-                }
-
                 this.validateCurrentState();
 
                 // Lógica do tutorial
