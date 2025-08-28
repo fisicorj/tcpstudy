@@ -7,12 +7,12 @@ Pratique os padrões **TIA/EIA 568A, 568B** e **Crossover** em uma interface int
 
 ## ✨ Recursos  
 
-🎯 Montagem Interativa (Drag-and-Drop): monte cabos Ethernet virtuais arrastando e soltando os fios no conector RJ45.  
-🔌 Padrões Múltiplos: pratique os principais padrões, incluindo TIA/EIA 568A, 568B e crossover (10/100 e 1000BASE-T).  
-✅ Validação em Tempo Real: feedback visual imediato — slots em verde (correto) ou vermelho (incorreto).  
-📘 Modo Tutorial: orientação passo a passo para aprender as combinações de cores de forma didática.  
-📱 Design Responsivo: funciona em **desktop, tablet e dispositivos móveis**.  
-🎨 UI Limpa e Moderna: interface minimalista, com animações suaves e foco na experiência do usuário.  
+- 🎯 **Montagem Interativa (Drag-and-Drop)**: monte cabos Ethernet virtuais arrastando e soltando os fios no conector RJ45.  
+- 🔌 **Padrões Múltiplos**: pratique os principais padrões, incluindo TIA/EIA 568A, 568B e crossover (10/100 e 1000BASE-T).  
+- ✅ **Validação em Tempo Real**: feedback visual imediato — slots em verde (correto) ou vermelho (incorreto).  
+- 📘 **Modo Tutorial**: orientação passo a passo para aprender as combinações de cores de forma didática.  
+- 📱 **Design Responsivo**: funciona em **desktop, tablet e dispositivos móveis**.  
+- 🎨 **UI Limpa e Moderna**: interface minimalista, com animações suaves e foco na experiência do usuário.  
 
 ---
 
@@ -70,8 +70,7 @@ Contribuições são sempre bem-vindas!
 
 ## 📄 Licença  
 
-Distribuído sob a licença **MIT**. Veja o arquivo [LICENSE.md](LICENSE.md) para mais detalhes.  
-
+Distribuído sob a licença **MIT**.
 ---
 
 ## 📬 Contato  
